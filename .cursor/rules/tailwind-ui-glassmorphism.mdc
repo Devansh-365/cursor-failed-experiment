@@ -1,0 +1,136 @@
+---
+description: Vision Pro Glassmorphism UI Components
+globs: *.tsx,*.css
+alwaysApply: false
+---
+# Vision Pro Glassmorphism
+
+<rule>
+name: vision_pro_glassmorphism
+description: Guidelines for creating glassmorphism UI components in the Apple Vision Pro style
+
+filters:
+  - type: file_extension
+    pattern: "\\.(tsx|css)$"
+  - type: content
+    pattern: "backdrop-blur|bg-opacity|glass|blur|transparent"
+
+actions:
+  - type: suggest
+    message: |
+      ## Vision Pro Glassmorphism Guidelines
+      
+      Apple Vision Pro UI employs sophisticated glassmorphism effects that create depth and dimension. Follow these guidelines to achieve authentic Vision Pro glass effects:
+      
+      ### Glass Panel Components
+      
+      #### Basic Glass Panel
+      ```tsx
+      <div className="relative bg-black/20 backdrop-blur-xl border border-white/10 rounded-xl shadow-visionpro-md overflow-hidden">
+        {/* Content goes here */}
+      </div>
+      ```
+      
+      #### Interactive Glass Button
+      ```tsx
+      <button className="
+        px-6 py-3 
+        bg-white/10 hover:bg-white/15 
+        backdrop-blur-md 
+        border border-white/20 
+        rounded-full 
+        shadow-visionpro-sm 
+        transition-all duration-300 
+        text-white font-medium
+        active:scale-[0.98]
+      ">
+        Button Text
+      </button>
+      ```
+      
+      #### Glass Card
+      ```tsx
+      <div className="
+        p-6 
+        bg-gradient-to-b from-white/10 to-black/20 
+        backdrop-blur-xl 
+        border border-white/10 
+        rounded-2xl 
+        shadow-visionpro-md
+      ">
+        <h3 className="text-visionpro-title text-white">Card Title</h3>
+        <p className="text-visionpro-body text-white/70 mt-2">Card content goes here</p>
+      </div>
+      ```
+      
+      ### Key Principles
+      
+      1. **Layering & Depth**
+         - Use subtle opacity differences between UI layers (10-20% opacity changes)
+         - Add subtle borders (white/5 to white/20) to enhance edge definition
+      
+      2. **Light Interaction**
+         - Add subtle gradients to simulate light interaction with glass
+         - Example: `bg-gradient-to-b from-white/10 to-transparent`
+      
+      3. **Blur Levels**
+         - Content in foreground: `backdrop-blur-sm` (light blur)
+         - Standard UI elements: `backdrop-blur-md` (medium blur)
+         - Background elements: `backdrop-blur-xl` (heavy blur)
+      
+      4. **Motion & Interaction**
+         - Add subtle scale transforms on hover/active states
+         - Increase opacity/blur slightly on hover for feedback
+         
+      5. **Inner Shadows & Glows**
+         - Use subtle box-shadow inset for depth: `shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]`
+         - Add subtle outer glow for prominent elements: `shadow-[0_0_15px_rgba(255,255,255,0.15)]`
+         
+      ### Common Mistakes to Avoid
+      
+      - **Don't** use fully opaque backgrounds with glass effects
+      - **Don't** use harsh or colorful borders with glass components
+      - **Don't** use excessive blur that makes content unreadable
+      - **Don't** combine glass effects with heavy textures
+      - **Don't** use bright background colors behind glass (keep dark, subtle backgrounds)
+      
+      ### Implementation in Tailwind Config
+      
+      Add these custom utilities to your tailwind.config.js:
+      
+      ```js
+      // tailwind.config.js
+      module.exports = {
+        theme: {
+          extend: {
+            backdropBlur: {
+              xs: '2px',
+            },
+            boxShadow: {
+              'glass-inner': 'inset 0 0 0 1px rgba(255, 255, 255, 0.1)',
+              'glass-outer': '0 8px 32px rgba(0, 0, 0, 0.2)',
+            },
+            backgroundImage: {
+              'glass-gradient': 'linear-gradient(to bottom, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))',
+            }
+          }
+        }
+      }
+      ```
+
+examples:
+  - input: |
+      <div className="bg-white/50 backdrop-blur-md rounded-lg p-4">
+        <h3 className="text-xl">Card Title</h3>
+        <p>Card content goes here</p>
+      </div>
+    output: |
+      <div className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-visionpro-md">
+        <h3 className="text-visionpro-title text-white">Card Title</h3>
+        <p className="text-visionpro-body text-white/70 mt-2">Card content goes here</p>
+      </div>
+
+metadata:
+  priority: high
+  version: 1.0
+</rule> 

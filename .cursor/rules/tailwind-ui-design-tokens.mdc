@@ -1,0 +1,102 @@
+---
+description: Vision Pro Design Tokens and Variables
+globs: *.tsx,*.css,*.ts
+alwaysApply: false
+---
+# Vision Pro Design Tokens
+
+<rule>
+name: vision_pro_design_tokens
+description: Defines the design tokens and variables for Apple Vision Pro-inspired UI
+
+filters:
+  - type: file_extension
+    pattern: "\\.(tsx|css|ts)$"
+  - type: content
+    pattern: "tailwind|className|bg-|text-|border-|shadow-|rounded-"
+
+actions:
+  - type: suggest
+    message: |
+      ## Vision Pro Design System Tokens
+
+      ### Colors
+      
+      #### Primary Neutrals
+      - `bg-visionpro-bg`: A soft, dark gray background (`#1c1c1e`)
+      - `text-visionpro-text`: Crisp white text (`#ffffff`) for dark backgrounds
+      - `text-visionpro-text-secondary`: Subtle, light gray text (`#8e8e93`) for secondary content
+      
+      #### Accent Colors
+      - `bg-visionpro-accent`: Subtle purple-blue gradient (`from-purple-600/80 to-indigo-700/80`)
+      - `border-visionpro-glow`: Subtle, light border for depth (`rgba(255, 255, 255, 0.08)`)
+      
+      #### Depth & Glass
+      - `bg-visionpro-glass`: Translucent glass effect (`bg-black/20 backdrop-blur-xl`)
+      - `bg-visionpro-card`: Slightly lighter card background (`#2c2c2e`)
+      
+      ### Shadows
+      - `shadow-visionpro-sm`: Subtle inner glow (`inset 0 0 0 1px rgba(255, 255, 255, 0.05)`)
+      - `shadow-visionpro-md`: Medium depth shadow for cards (`0 4px 12px rgba(0, 0, 0, 0.5)`)
+      - `shadow-visionpro-lg`: Prominent shadow for elevated elements (`0 8px 24px rgba(0, 0, 0, 0.7)`)
+      
+      ### Rounded Corners
+      - `rounded-visionpro-sm`: Subtle rounding (`rounded-md` = 0.375rem)
+      - `rounded-visionpro-md`: Standard rounding for cards (`rounded-xl` = 0.75rem)
+      - `rounded-visionpro-lg`: Prominent rounding for modal dialogs (`rounded-2xl` = 1rem)
+      - `rounded-visionpro-full`: Pill-shaped or circular elements (`rounded-full`)
+      
+      ### Typography
+      - `font-visionpro`: SF Pro Display or closest system equivalent (`font-sans`)
+      - `text-visionpro-display`: Large display text (36px+)
+      - `text-visionpro-title`: Section titles (24-32px)
+      - `text-visionpro-body`: Body text (16-18px)
+      - `text-visionpro-caption`: Caption text (14px)
+      - `tracking-visionpro-tight`: Tighter letter spacing for headings (`-0.025em`)
+      
+      ### Spacing
+      - `visionpro-spacing-sm`: Small spacing (`0.5rem` = 8px)
+      - `visionpro-spacing-md`: Medium spacing (`1rem` = 16px)
+      - `visionpro-spacing-lg`: Large spacing (`1.5rem` = 24px)
+      - `visionpro-spacing-xl`: Extra large spacing (`2rem` = 32px)
+      
+      ### Blur Effects
+      - `backdrop-blur-visionpro-sm`: Subtle blur (`backdrop-blur-sm` = 4px)
+      - `backdrop-blur-visionpro-md`: Medium blur (`backdrop-blur-md` = 12px)
+      - `backdrop-blur-visionpro-lg`: Heavy blur (`backdrop-blur-xl` = 24px)
+      
+      ### Animations
+      - `animate-visionpro-fade`: Subtle fade in effect
+      - `animate-visionpro-appear`: Fade in and subtle scale up
+      - `animate-visionpro-hover`: Subtle enlargement on hover (1.02x scale)
+
+      ### Usage Example:
+      ```tsx
+      <div className="bg-visionpro-glass rounded-visionpro-md shadow-visionpro-md p-visionpro-spacing-lg">
+        <h2 className="text-visionpro-title text-visionpro-text tracking-visionpro-tight">
+          Welcome to Vision Experience
+        </h2>
+        <p className="text-visionpro-body text-visionpro-text-secondary mt-visionpro-spacing-sm">
+          Explore a new dimension of digital interaction
+        </p>
+      </div>
+      ```
+
+      Implement these tokens in your tailwind.config.js extend section to maintain design consistency.
+
+examples:
+  - input: |
+      <div className="p-4 bg-gray-900 rounded-lg">
+        <h2 className="text-2xl text-white">Feature Title</h2>
+        <p className="text-gray-400">Feature description goes here</p>
+      </div>
+    output: |
+      <div className="p-visionpro-spacing-lg bg-visionpro-glass rounded-visionpro-md shadow-visionpro-md">
+        <h2 className="text-visionpro-title text-visionpro-text tracking-visionpro-tight">Feature Title</h2>
+        <p className="text-visionpro-body text-visionpro-text-secondary">Feature description goes here</p>
+      </div>
+
+metadata:
+  priority: high
+  version: 1.0
+</rule> 

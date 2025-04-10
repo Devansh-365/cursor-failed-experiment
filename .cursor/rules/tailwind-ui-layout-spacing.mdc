@@ -1,0 +1,158 @@
+---
+description: Vision Pro Layout and Spacing Guidelines
+globs: *.tsx,*.css
+alwaysApply: false
+---
+# Vision Pro Layout and Spacing
+
+<rule>
+name: vision_pro_layout_spacing
+description: Guidelines for creating layouts with appropriate spacing in the Apple Vision Pro style
+
+filters:
+  - type: file_extension
+    pattern: "\\.(tsx|css)$"
+  - type: content
+    pattern: "grid|flex|gap|p-|m-|px-|py-|mx-|my-|space-"
+
+actions:
+  - type: suggest
+    message: |
+      ## Vision Pro Layout & Spacing Guidelines
+      
+      Apple Vision Pro interface employs generous whitespace and careful layout to create an immersive spatial experience. Follow these guidelines for authentic Vision Pro spatial layouts:
+      
+      ### Spatial Layout Principles
+      
+      1. **Depth Hierarchy**
+         - Prioritize important content by positioning it at the optimal viewing distance
+         - Use z-index and subtle scaling to create perceived depth
+         - Organize content in distinct layers with clear separation
+      
+      2. **Breathing Room**
+         - Use generous spacing between elements (more than typical web UI)
+         - Avoid cluttered layouts; embrace negative space
+         - Group related elements with consistent spacing
+      
+      3. **Spatial Grid**
+         - Use a consistent grid system with proportional sizing
+         - Maintain alignment across different sections
+         - Allow for "spatial windows" that can overlap but maintain clear boundaries
+      
+      ### Recommended Spacing Scale
+      
+      - **Micro spacing**: `space-xs` = 0.25rem (4px) - For very tight spacing between related elements
+      - **Small spacing**: `space-sm` = 0.75rem (12px) - For closely related elements
+      - **Medium spacing**: `space-md` = 1.5rem (24px) - Standard spacing between components
+      - **Large spacing**: `space-lg` = 2.5rem (40px) - Section separators and major components
+      - **Extra Large spacing**: `space-xl` = 4rem (64px) - Major section breaks
+      
+      ### Container Widths
+      
+      - **Content container**: Max-width of 80% of viewport or 1200px
+      - **Card container**: Width between 320px - 480px
+      - **Dialog container**: Width between 400px - 640px
+      - **Full-width container**: 100% with generous padding (px-12 minimum)
+      
+      ### Recommended Layout Patterns
+      
+      #### Centered Card Layout
+      ```tsx
+      <div className="flex items-center justify-center min-h-screen p-visionpro-spacing-xl bg-visionpro-bg">
+        <div className="w-full max-w-md p-visionpro-spacing-lg bg-visionpro-glass rounded-visionpro-lg shadow-visionpro-md">
+          {/* Card content */}
+        </div>
+      </div>
+      ```
+      
+      #### Two-Column Layout
+      ```tsx
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-visionpro-spacing-xl p-visionpro-spacing-lg">
+        <div className="flex flex-col space-y-visionpro-spacing-md">
+          {/* Left column content */}
+        </div>
+        <div className="flex flex-col space-y-visionpro-spacing-md">
+          {/* Right column content */}
+        </div>
+      </div>
+      ```
+      
+      #### Content Grid
+      ```tsx
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-visionpro-spacing-lg p-visionpro-spacing-xl">
+        {items.map(item => (
+          <div key={item.id} className="bg-visionpro-glass p-visionpro-spacing-md rounded-visionpro-md">
+            {/* Grid item content */}
+          </div>
+        ))}
+      </div>
+      ```
+      
+      #### Spatial Navigation Menu
+      ```tsx
+      <nav className="fixed bottom-visionpro-spacing-lg left-1/2 transform -translate-x-1/2 
+                     px-visionpro-spacing-md py-visionpro-spacing-sm 
+                     bg-visionpro-glass backdrop-blur-visionpro-md 
+                     rounded-visionpro-full border border-white/10 
+                     shadow-visionpro-md">
+        <ul className="flex items-center space-x-visionpro-spacing-md">
+          {/* Menu items */}
+        </ul>
+      </nav>
+      ```
+      
+      ### Common Layout Mistakes to Avoid
+      
+      - **Don't** create overly dense layouts with insufficient spacing
+      - **Don't** use inconsistent spacing values throughout the interface
+      - **Don't** place too many elements at the same depth plane
+      - **Don't** create layouts that require excessive scrolling
+      - **Don't** use rigid grid layouts when fluid, spatial layouts would be more appropriate
+      - **Don't** overcrowd the peripheral areas of the interface
+      
+      ### Implementation in Tailwind Config
+      
+      Add these custom spacing utilities to your tailwind.config.js:
+      
+      ```js
+      // tailwind.config.js
+      module.exports = {
+        theme: {
+          extend: {
+            spacing: {
+              'visionpro-xs': '0.25rem', // 4px
+              'visionpro-sm': '0.75rem', // 12px
+              'visionpro-md': '1.5rem',  // 24px
+              'visionpro-lg': '2.5rem',  // 40px
+              'visionpro-xl': '4rem',    // 64px
+            },
+            gap: {
+              'visionpro-xs': '0.25rem',
+              'visionpro-sm': '0.75rem',
+              'visionpro-md': '1.5rem',
+              'visionpro-lg': '2.5rem',
+              'visionpro-xl': '4rem',
+            }
+          }
+        }
+      }
+      ```
+
+examples:
+  - input: |
+      <div className="grid grid-cols-3 gap-4 p-6">
+        <div className="bg-gray-800 p-4 rounded-lg">Item 1</div>
+        <div className="bg-gray-800 p-4 rounded-lg">Item 2</div>
+        <div className="bg-gray-800 p-4 rounded-lg">Item 3</div>
+      </div>
+    output: |
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-visionpro-lg p-visionpro-xl">
+        <div className="bg-visionpro-glass p-visionpro-md rounded-visionpro-md shadow-visionpro-sm">Item 1</div>
+        <div className="bg-visionpro-glass p-visionpro-md rounded-visionpro-md shadow-visionpro-sm">Item 2</div>
+        <div className="bg-visionpro-glass p-visionpro-md rounded-visionpro-md shadow-visionpro-sm">Item 3</div>
+      </div>
+
+metadata:
+  priority: high
+  version: 1.0
+</rule> 

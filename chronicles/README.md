@@ -8,8 +8,6 @@ This directory contains development checklists for the Cherry credit card reward
    - Project initialization
    - Database setup
    - Project structure
-   - Git & deployment configuration
-   - Testing environment setup
 
 2. **[Frontend Development](./02-frontend-development.md)**
    - Design system implementation
@@ -40,4 +38,4 @@ This directory contains development checklists for the Cherry credit card reward
 1. Complete the initial infrastructure setup
 2. Work in parallel on frontend and backend tasks when possible
 3. Integrate and test components as they are completed
-4. Address usability, accessibility, and performance as you build
+4. Address usability, accessibility, and performance as you build 

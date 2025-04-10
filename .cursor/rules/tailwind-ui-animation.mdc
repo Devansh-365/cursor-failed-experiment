@@ -1,0 +1,228 @@
+---
+description: Vision Pro Animations and Transitions
+globs: *.tsx,*.css
+alwaysApply: false
+---
+# Vision Pro Animations and Transitions
+
+<rule>
+name: vision_pro_animations
+description: Guidelines for creating subtle and elegant animations in the Apple Vision Pro style
+
+filters:
+  - type: file_extension
+    pattern: "\\.(tsx|css)$"
+  - type: content
+    pattern: "transition|animate-|motion|hover:|focus:|active:|transform|scale|opacity|blur|duration"
+
+actions:
+  - type: suggest
+    message: |
+      ## Vision Pro Animation Guidelines
+      
+      Apple Vision Pro employs subtle, fluid animations that enhance the spatial experience without causing distraction. Follow these guidelines for authentic Vision Pro motion:
+      
+      ### Animation Principles
+      
+      1. **Subtlety & Purpose**
+         - Use animations that serve a purpose (indicate state, provide feedback, guide attention)
+         - Keep movements subtle and elegant rather than flashy
+         - Animations should feel natural and intuitive to the spatial environment
+      
+      2. **Fluidity & Smoothness**
+         - Ensure animations run at smooth framerates
+         - Use appropriate easing functions (ease-out for entering, ease-in for exiting)
+         - Create continuous, uninterrupted motion paths
+      
+      3. **Spatial Awareness**
+         - Consider depth when animating (closer elements should move more than distant ones)
+         - Use subtle scaling to simulate movement toward/away from user
+         - Create coherent motion patterns across related elements
+      
+      ### Recommended Animation Types
+      
+      #### Transition Animations
+      
+      - **Fade transitions**: Subtle opacity changes with proper easing
+      - **Scale transitions**: Subtle size changes (0.95 to 1.05 scale range)
+      - **Position transitions**: Small movements to indicate state changes
+      - **Blur transitions**: Changing blur values to alter perceived distance
+      
+      #### Micro-Interactions
+      
+      - **Hover effects**: Subtle scale increase (1.02-1.05x) and brightness/opacity changes
+      - **Button presses**: Subtle scale decrease (0.98x) on active state
+      - **Focus states**: Gentle glow or border highlight
+      - **Loading states**: Subtle pulse or shimmer effects
+      
+      #### Ambient Motion
+      
+      - **Background effects**: Very slow, subtle movements (floating gradients, etc.)
+      - **Parallax effects**: Subtle depth-based movement (3-5% movement maximum)
+      - **Breathing effects**: Very subtle scale/opacity changes that mimic breathing rhythm
+      
+      ### Animation Timing
+      
+      - **Quick interactions**: 150-250ms
+      - **Standard transitions**: 300-500ms
+      - **Emphasis animations**: 600-800ms
+      - **Ambient animations**: 2000ms+
+      
+      ### Implementation Examples
+      
+      #### Glass Panel Appearance
+      ```tsx
+      <div className="animate-visionpro-appear bg-visionpro-glass rounded-xl shadow-visionpro-md">
+        {/* Content */}
+      </div>
+      ```
+      
+      #### Interactive Button
+      ```tsx
+      <button className="
+        px-6 py-3 
+        bg-white/10 
+        hover:bg-white/15 
+        hover:scale-[1.02] 
+        active:scale-[0.98] 
+        transition-all duration-300 ease-out 
+        rounded-full 
+        text-white
+      ">
+        Button Text
+      </button>
+      ```
+      
+      #### Gradient Blob Animation
+      ```tsx
+      <div className="
+        absolute -z-10 
+        w-[500px] h-[500px] 
+        rounded-full 
+        bg-gradient-to-r from-purple-600/30 to-indigo-700/30 
+        blur-3xl 
+        animate-visionpro-float
+      "></div>
+      ```
+      
+      #### Content Reveal Sequence
+      ```tsx
+      <div className="space-y-4">
+        {items.map((item, index) => (
+          <div 
+            key={item.id} 
+            className="bg-visionpro-glass p-6 rounded-xl shadow-visionpro-md"
+            style={{ 
+              animationDelay: `${index * 100}ms`,
+              opacity: 0,
+              animation: 'visionpro-fade-in 500ms ease-out forwards'
+            }}
+          >
+            {/* Item content */}
+          </div>
+        ))}
+      </div>
+      ```
+      
+      ### Custom Animation Keyframes
+      
+      ```css
+      @keyframes visionpro-float {
+        0% {
+          transform: translateY(0) translateX(0);
+        }
+        50% {
+          transform: translateY(-10px) translateX(15px);
+        }
+        100% {
+          transform: translateY(0) translateX(0);
+        }
+      }
+      
+      @keyframes visionpro-fade-in {
+        from {
+          opacity: 0;
+          transform: translateY(10px) scale(0.98);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+      
+      @keyframes visionpro-pulse {
+        0% {
+          opacity: 0.7;
+        }
+        50% {
+          opacity: 0.9;
+        }
+        100% {
+          opacity: 0.7;
+        }
+      }
+      ```
+      
+      ### Tailwind Configuration
+      
+      ```js
+      // tailwind.config.js
+      module.exports = {
+        theme: {
+          extend: {
+            animation: {
+              'visionpro-appear': 'visionpro-fade-in 700ms ease-out forwards',
+              'visionpro-float': 'visionpro-float 12s ease-in-out infinite',
+              'visionpro-pulse': 'visionpro-pulse 3s ease-in-out infinite',
+            },
+            keyframes: {
+              'visionpro-fade-in': {
+                '0%': { opacity: '0', transform: 'translateY(10px) scale(0.98)' },
+                '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+              },
+              'visionpro-float': {
+                '0%, 100%': { transform: 'translateY(0) translateX(0)' },
+                '50%': { transform: 'translateY(-10px) translateX(15px)' },
+              },
+              'visionpro-pulse': {
+                '0%, 100%': { opacity: '0.7' },
+                '50%': { opacity: '0.9' },
+              },
+            },
+            transitionTimingFunction: {
+              'visionpro-in': 'cubic-bezier(0.4, 0, 0.2, 1)',
+              'visionpro-out': 'cubic-bezier(0, 0, 0.2, 1)',
+            },
+            transitionDuration: {
+              'visionpro-fast': '200ms',
+              'visionpro-standard': '400ms',
+              'visionpro-slow': '700ms',
+            }
+          }
+        }
+      }
+      ```
+      
+      ### Common Animation Mistakes to Avoid
+      
+      - **Don't** use jarring or excessive animations that distract from content
+      - **Don't** animate too many elements simultaneously
+      - **Don't** use animations that move elements in unpredictable ways
+      - **Don't** use animation timing that feels unnaturally fast or slow
+      - **Don't** create animations that could cause discomfort in spatial environments
+      - **Don't** use repetitive animations that don't end or can't be disabled
+
+examples:
+  - input: |
+      <div className="transition-all duration-300 hover:scale-110 hover:shadow-lg">
+        <h3>Hover Card</h3>
+      </div>
+    output: |
+      <div className="transition-all duration-visionpro-standard ease-visionpro-out hover:scale-[1.02] hover:shadow-visionpro-md">
+        <h3>Hover Card</h3>
+      </div>
+
+metadata:
+  priority: high
+  version: 1.0
+</rule> 

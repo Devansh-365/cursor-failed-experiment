@@ -1,4 +1,5 @@
 import Image from "next/image";
+import WaitlistForm from '@/components/WaitlistForm';
 
 export default function Home() {
   return (
@@ -49,6 +50,16 @@ export default function Home() {
           >
             Read our docs
           </a>
+        </div>
+
+        <div className="max-w-3xl w-full text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-3 text-gray-900">
+            Join the Cherry Waitlist
+          </h1>
+          <p className="text-lg text-gray-600 mb-8">
+            Be the first to know when we launch. Enter your details below to join our waitlist.
+          </p>
+          <WaitlistForm />
         </div>
       </main>
       <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">

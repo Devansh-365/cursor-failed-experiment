@@ -1,0 +1,178 @@
+---
+description: Vision Pro Typography Guidelines
+globs: *.tsx,*.css
+alwaysApply: false
+---
+# Vision Pro Typography
+
+<rule>
+name: vision_pro_typography
+description: Guidelines for using typography in the Apple Vision Pro style
+
+filters:
+  - type: file_extension
+    pattern: "\\.(tsx|css)$"
+  - type: content
+    pattern: "text-|font-|tracking-|leading-|typography|heading|title|label"
+
+actions:
+  - type: suggest
+    message: |
+      ## Vision Pro Typography Guidelines
+      
+      Apple Vision Pro employs sophisticated typography with careful attention to legibility in spatial environments. Follow these guidelines for authentic Vision Pro text treatment:
+      
+      ### Typography Principles
+      
+      1. **Clarity & Legibility**
+         - Prioritize legibility above all with adequate contrast
+         - Use proper text sizing that works in spatial environments
+         - Maintain comfortable line lengths (66-80 characters maximum)
+      
+      2. **Typographic Hierarchy**
+         - Create clear visual distinction between text levels
+         - Use weight more than size to establish hierarchy
+         - Limit to 3-4 distinct text styles per screen
+      
+      3. **Spatial Considerations**
+         - Avoid overly small text that would be illegible in spatial view
+         - Consider text from multiple viewing angles and distances
+         - Use proper line-height (1.2-1.5) for comfortable reading
+      
+      ### Font Family
+      
+      Use system fonts that closely match SF Pro Display and SF Pro Text:
+      
+      ```js
+      // In tailwind.config.js
+      fontFamily: {
+        sans: [
+          'SF Pro Display',
+          'SF Pro Text',
+          'system-ui',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'Segoe UI',
+          'Roboto',
+          'Inter',
+          'sans-serif'
+        ],
+      }
+      ```
+      
+      ### Type Scale
+      
+      #### Display Text (Large Headers, Hero Text)
+      ```tsx
+      <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight text-white">
+        Vision Pro Display Heading
+      </h1>
+      ```
+      
+      #### Title Text (Section Headers)
+      ```tsx
+      <h2 className="text-2xl md:text-3xl font-medium tracking-tight text-white">
+        Vision Pro Title Text
+      </h2>
+      ```
+      
+      #### Subtitle Text
+      ```tsx
+      <h3 className="text-xl font-medium tracking-normal text-white/90">
+        Vision Pro Subtitle
+      </h3>
+      ```
+      
+      #### Body Text
+      ```tsx
+      <p className="text-base md:text-lg leading-relaxed text-white/80 font-normal">
+        Vision Pro body text uses proper spacing and opacity to maintain readability 
+        while creating a clear hierarchy with headings. Body text should maintain
+        comfortable line length and adequate contrast.
+      </p>
+      ```
+      
+      #### Caption/Label Text
+      ```tsx
+      <span className="text-sm text-white/70 font-normal">
+        Vision Pro caption text
+      </span>
+      ```
+      
+      ### Text Color & Contrast
+      
+      - **Primary text**: `text-white` or `text-white/90` (full or 90% opacity)
+      - **Secondary text**: `text-white/80` (80% opacity)
+      - **Tertiary text**: `text-white/70` (70% opacity) 
+      - **Disabled text**: `text-white/50` (50% opacity)
+      - **On light backgrounds**: `text-black/90` to `text-black/80`
+      
+      ### Text Styling
+      
+      #### Letter Spacing
+      - Display/Headings: `tracking-tight` (-0.025em)
+      - Titles: `tracking-normal` (0)
+      - Body/Small: `tracking-normal` (0) or `tracking-wide` (0.025em) for small sizes
+      
+      #### Line Height
+      - Display/Headings: `leading-tight` (1.25)
+      - Titles: `leading-snug` (1.375)
+      - Body text: `leading-relaxed` (1.625)
+      - Multi-line small text: `leading-normal` (1.5)
+      
+      ### Implementation
+      
+      Add these text utilities to your tailwind.config.js:
+      
+      ```js
+      // tailwind.config.js
+      module.exports = {
+        theme: {
+          extend: {
+            fontSize: {
+              'visionpro-display': ['4rem', { lineHeight: '1.1' }],
+              'visionpro-title': ['2.5rem', { lineHeight: '1.2' }],
+              'visionpro-subtitle': ['1.5rem', { lineHeight: '1.3' }],
+              'visionpro-body': ['1.125rem', { lineHeight: '1.5' }],
+              'visionpro-caption': ['0.875rem', { lineHeight: '1.4' }],
+            },
+            letterSpacing: {
+              'visionpro-tight': '-0.025em',
+              'visionpro-wide': '0.025em',
+            }
+          }
+        }
+      }
+      ```
+      
+      ### Common Typography Mistakes to Avoid
+      
+      - **Don't** use heavy fonts (900 weight) as they appear too bold in spatial UI
+      - **Don't** use excessively small text (smaller than 14px)
+      - **Don't** use low-contrast text (below 4.5:1 ratio)
+      - **Don't** use overly complex or decorative fonts
+      - **Don't** justify text as it creates uneven spacing that hinders readability
+      - **Don't** combine too many different font weights and sizes on the same screen
+
+examples:
+  - input: |
+      <div>
+        <h1 className="text-3xl font-bold text-gray-100">Main Heading</h1>
+        <h2 className="text-xl font-semibold text-gray-200">Subheading</h2>
+        <p className="text-base text-gray-300 mt-4">
+          This is a paragraph of text that explains something important to the user.
+        </p>
+      </div>
+    output: |
+      <div>
+        <h1 className="text-4xl md:text-5xl font-medium tracking-tight text-white">Main Heading</h1>
+        <h2 className="text-2xl font-medium tracking-normal text-white/90">Subheading</h2>
+        <p className="text-lg leading-relaxed text-white/80 font-normal mt-visionpro-md">
+          This is a paragraph of text that explains something important to the user.
+        </p>
+      </div>
+
+metadata:
+  priority: high
+  version: 1.0
+</rule> 

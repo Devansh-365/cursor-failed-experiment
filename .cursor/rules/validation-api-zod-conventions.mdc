@@ -1,0 +1,380 @@
+---
+description: Zod Validation Best Practices for APIs
+globs: *.ts,*.tsx
+alwaysApply: false
+---
+# Zod Validation Conventions
+
+<rule>
+name: zod_validation_conventions
+description: Best practices for using Zod to validate API requests and forms
+
+filters:
+  - type: file_extension
+    pattern: "\\.(ts|tsx)$"
+  - type: content
+    pattern: "zod|z\\.|Schema|validate|parse|safeParse|from 'zod'"
+
+actions:
+  - type: suggest
+    message: |
+      ## Zod Validation Best Practices
+      
+      Follow these conventions when using Zod for validation to ensure consistent, secure, and user-friendly input handling across your application.
+      
+      ### Schema Definition
+      
+      Define clear, reusable validation schemas:
+      
+      ```typescript
+      // lib/validations/waitlist.ts
+      import { z } from 'zod';
+      
+      export const WaitlistSchema = z.object({
+        email: z
+          .string({ required_error: 'Email is required' })
+          .email('Please enter a valid email address')
+          .min(5, 'Email must be at least 5 characters')
+          .max(100, 'Email must be less than 100 characters'),
+        referralCode: z
+          .string()
+          .optional(),
+      });
+      
+      export type WaitlistFormData = z.infer<typeof WaitlistSchema>;
+      ```
+      
+      ### Schema Organization
+      
+      - Group related schemas in domain-specific files
+      - Export both the schema and inferred types
+      - Use descriptive naming (e.g., `UserSchema`, `ProductSchema`)
+      
+      ### Common Validation Patterns
+      
+      #### Email Validation
+      
+      ```typescript
+      const emailSchema = z
+        .string()
+        .email('Please enter a valid email address')
+        .min(5, 'Email must be at least 5 characters')
+        .max(100, 'Email must be less than 100 characters');
+      ```
+      
+      #### URL Validation
+      
+      ```typescript
+      const urlSchema = z
+        .string()
+        .url('Please enter a valid URL')
+        .startsWith('https://', 'URL must use HTTPS');
+      ```
+      
+      #### Password Validation
+      
+      ```typescript
+      const passwordSchema = z
+        .string()
+        .min(8, 'Password must be at least 8 characters')
+        .max(100, 'Password must be less than 100 characters')
+        .regex(
+          /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+          'Password must include uppercase, lowercase, number and special character'
+        );
+      ```
+      
+      #### Date Validation
+      
+      ```typescript
+      const dateSchema = z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
+        .refine((date) => !isNaN(new Date(date).getTime()), {
+          message: 'Invalid date',
+        });
+      ```
+      
+      ### API Request Validation
+      
+      Validate incoming API requests:
+      
+      ```typescript
+      // app/api/waitlist/route.ts
+      import { NextRequest, NextResponse } from 'next/server';
+      import { WaitlistSchema } from '@/lib/validations/waitlist';
+      
+      export async function POST(req: NextRequest) {
+        try {
+          const body = await req.json();
+          
+          // Validate with Zod
+          const result = WaitlistSchema.safeParse(body);
+          
+          if (!result.success) {
+            // Return validation errors
+            return NextResponse.json(
+              {
+                success: false,
+                message: 'Validation failed',
+                errors: result.error.format()
+              },
+              { status: 400 }
+            );
+          }
+          
+          // Use validated data
+          const { email, referralCode } = result.data;
+          
+          // Process request...
+          
+        } catch (error) {
+          // Handle other errors
+        }
+      }
+      ```
+      
+      ### Form Validation Integration
+      
+      Integrate Zod with form libraries:
+      
+      ```typescript
+      // With React Hook Form
+      import { useForm } from 'react-hook-form';
+      import { zodResolver } from '@hookform/resolvers/zod';
+      import { WaitlistSchema, WaitlistFormData } from '@/lib/validations/waitlist';
+      
+      const WaitlistForm = () => {
+        const form = useForm<WaitlistFormData>({
+          resolver: zodResolver(WaitlistSchema),
+          defaultValues: {
+            email: '',
+            referralCode: ''
+          }
+        });
+        
+        const onSubmit = (data: WaitlistFormData) => {
+          // Submit validated data...
+        };
+        
+        return (
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <input
+              {...form.register('email')}
+              placeholder="Email"
+            />
+            {form.formState.errors.email && (
+              <span>{form.formState.errors.email.message}</span>
+            )}
+            
+            <button type="submit">Join Waitlist</button>
+          </form>
+        );
+      };
+      ```
+      
+      ### Advanced Validation Techniques
+      
+      #### Custom Validations
+      
+      Use `.refine()` for custom validations:
+      
+      ```typescript
+      const userSchema = z.object({
+        username: z.string(),
+        age: z.number()
+      }).refine(data => {
+        // Custom validation logic
+        if (data.username === 'admin' && data.age < 18) {
+          return false;
+        }
+        return true;
+      }, {
+        message: 'Admin users must be 18+',
+        path: ['age'] // Error path
+      });
+      ```
+      
+      #### Conditional Validation
+      
+      ```typescript
+      const formSchema = z.object({
+        accountType: z.enum(['personal', 'business']),
+        personalEmail: z.string().email().optional(),
+        businessEmail: z.string().email().optional(),
+      }).refine(data => {
+        if (data.accountType === 'personal' && !data.personalEmail) {
+          return false;
+        }
+        if (data.accountType === 'business' && !data.businessEmail) {
+          return false;
+        }
+        return true;
+      }, {
+        message: 'Email is required for the selected account type',
+        path: ['accountType']
+      });
+      ```
+      
+      #### Schema Transformation
+      
+      Use `.transform()` for data transformation:
+      
+      ```typescript
+      const userInputSchema = z.object({
+        email: z.string().email(),
+        birthDate: z.string()
+      }).transform(data => ({
+        email: data.email.toLowerCase(),
+        birthDate: new Date(data.birthDate),
+        age: calculateAge(new Date(data.birthDate))
+      }));
+      ```
+      
+      ### Handling Validation Errors
+      
+      Format validation errors for API responses:
+      
+      ```typescript
+      function formatZodErrors(error: z.ZodError) {
+        return error.errors.reduce((acc, err) => {
+          const path = err.path.join('.');
+          acc[path] = err.message;
+          return acc;
+        }, {} as Record<string, string>);
+      }
+      
+      // Usage
+      try {
+        const result = userSchema.parse(userData);
+        // Process validated data
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          const formattedErrors = formatZodErrors(error);
+          return NextResponse.json({
+            success: false,
+            errors: formattedErrors
+          }, { status: 400 });
+        }
+        // Handle other errors
+      }
+      ```
+      
+      ### Composition & Reuse
+      
+      Compose schemas for reusability:
+      
+      ```typescript
+      // Base schemas
+      const emailSchema = z.string().email();
+      const nameSchema = z.string().min(2).max(50);
+      
+      // User schemas
+      const baseUserSchema = z.object({
+        email: emailSchema,
+        name: nameSchema
+      });
+      
+      const createUserSchema = baseUserSchema.extend({
+        password: z.string().min(8),
+        confirmPassword: z.string().min(8)
+      }).refine(data => data.password === data.confirmPassword, {
+        message: 'Passwords do not match',
+        path: ['confirmPassword']
+      });
+      
+      const updateUserSchema = baseUserSchema.partial();
+      ```
+      
+      ### Validation Best Practices
+      
+      1. **Validate Early, Validate Often**
+         - Validate inputs at API boundaries
+         - Validate form inputs before submission
+         - Validate data before any sensitive operations
+      
+      2. **Provide Clear Error Messages**
+         - Use descriptive error messages that guide users
+         - Specify which field failed validation
+         - Offer suggestions for fixing validation errors
+      
+      3. **Secure Validation**
+         - Never rely solely on client-side validation
+         - Always validate inputs on the server side
+         - Use strict schemas with proper constraints
+
+examples:
+  - input: |
+      // app/api/waitlist/route.ts
+      import { NextRequest, NextResponse } from 'next/server';
+      import { z } from 'zod';
+      
+      export async function POST(req: NextRequest) {
+        try {
+          const body = await req.json();
+          const { email } = body;
+          
+          // Check if email is valid
+          if (!email || !email.includes('@')) {
+            return NextResponse.json({ success: false, message: 'Invalid email' }, { status: 400 });
+          }
+          
+          // Process valid email...
+          
+          return NextResponse.json({ success: true });
+        } catch (error) {
+          return NextResponse.json({ success: false }, { status: 500 });
+        }
+      }
+    output: |
+      // app/api/waitlist/route.ts
+      import { NextRequest, NextResponse } from 'next/server';
+      import { z } from 'zod';
+      
+      // Define validation schema
+      const waitlistSchema = z.object({
+        email: z
+          .string({ required_error: 'Email is required' })
+          .email('Please enter a valid email address')
+          .min(5, 'Email must be at least 5 characters')
+          .max(100, 'Email must be less than 100 characters'),
+        referralCode: z.string().optional()
+      });
+      
+      export async function POST(req: NextRequest) {
+        try {
+          const body = await req.json();
+          
+          // Validate with Zod
+          const result = waitlistSchema.safeParse(body);
+          
+          if (!result.success) {
+            return NextResponse.json({
+              success: false,
+              message: 'Validation failed',
+              errors: result.error.format()
+            }, { status: 400 });
+          }
+          
+          // Use validated data
+          const { email, referralCode } = result.data;
+          
+          // Process valid data...
+          
+          return NextResponse.json({ 
+            success: true,
+            message: 'Successfully joined waitlist' 
+          }, { status: 201 });
+        } catch (error) {
+          console.error('Waitlist error:', error);
+          return NextResponse.json({ 
+            success: false, 
+            message: 'Server error processing request' 
+          }, { status: 500 });
+        }
+      }
+
+metadata:
+  priority: high
+  version: 1.0
+</rule> 

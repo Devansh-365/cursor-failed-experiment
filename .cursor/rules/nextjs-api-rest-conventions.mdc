@@ -1,0 +1,328 @@
+---
+description: REST API Best Practices with Next.js API Routes
+globs: *.ts,*.tsx,*/api/**/*
+alwaysApply: false
+---
+# Next.js REST API Conventions
+
+<rule>
+name: nextjs_rest_api_conventions
+description: Best practices for creating REST API endpoints with Next.js API Routes
+
+filters:
+  - type: file_extension
+    pattern: "\\.(ts|tsx)$"
+  - type: file_path
+    pattern: "api/.*\\.(ts|tsx)$"
+  - type: content
+    pattern: "export|req|res|request|response|handler|NextRequest|NextResponse"
+
+actions:
+  - type: suggest
+    message: |
+      ## Next.js REST API Best Practices
+      
+      Follow these conventions when creating API endpoints with Next.js API Routes to ensure consistency, security, and maintainability across your application.
+      
+      ### API Route Structure
+      
+      #### Route Handlers (App Router)
+      
+      ```typescript
+      // app/api/waitlist/route.ts
+      import { NextRequest, NextResponse } from 'next/server';
+      import { z } from 'zod';
+      import { prisma } from '@/lib/prisma';
+      
+      // POST handler for email submission
+      export async function POST(req: NextRequest) {
+        try {
+          // 1. Parse and validate request
+          const body = await req.json();
+          
+          // 2. Process the request
+          // ...processing logic...
+          
+          // 3. Return appropriate response
+          return NextResponse.json(
+            { success: true, message: 'Successfully joined waitlist' },
+            { status: 201 }
+          );
+        } catch (error) {
+          // 4. Error handling
+          console.error('Waitlist submission error:', error);
+          return NextResponse.json(
+            { success: false, message: 'Failed to join waitlist' },
+            { status: 500 }
+          );
+        }
+      }
+      ```
+      
+      ### Request Validation
+      
+      Always validate incoming requests with Zod before processing:
+      
+      ```typescript
+      // 1. Define schema
+      const waitlistSchema = z.object({
+        email: z.string().email('Please enter a valid email')
+      });
+      
+      // 2. Validate input
+      const result = waitlistSchema.safeParse(body);
+      if (!result.success) {
+        return NextResponse.json(
+          { success: false, message: 'Invalid input', errors: result.error.format() },
+          { status: 400 }
+        );
+      }
+      
+      // 3. Use validated data
+      const { email } = result.data;
+      ```
+      
+      ### Response Formatting
+      
+      Use consistent response formatting across all endpoints:
+      
+      ```typescript
+      // Success response
+      return NextResponse.json(
+        {
+          success: true,
+          data: { ... }, // Optional data payload
+          message: 'Operation successful' // User-friendly message
+        },
+        { status: 200 } // Appropriate status code
+      );
+      
+      // Error response
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Operation failed', // User-friendly error message
+          errors: ... // Optional detailed errors
+        },
+        { status: 400 } // Appropriate status code
+      );
+      ```
+      
+      ### Status Code Conventions
+      
+      - **200 OK**: Successful GET, PUT, PATCH with response
+      - **201 Created**: Successful resource creation
+      - **204 No Content**: Successful operation with no response body
+      - **400 Bad Request**: Invalid input, validation errors
+      - **401 Unauthorized**: Authentication required
+      - **403 Forbidden**: Authenticated but not authorized
+      - **404 Not Found**: Resource not found
+      - **409 Conflict**: Request conflicts with current state
+      - **500 Internal Server Error**: Unexpected server errors
+      
+      ### Error Handling
+      
+      Implement robust error handling in all API routes:
+      
+      ```typescript
+      try {
+        // API logic here
+      } catch (error) {
+        console.error(`Error in API route: ${error instanceof Error ? error.message : String(error)}`);
+        
+        // Determine if client error or server error
+        const isClientError = error instanceof z.ZodError;
+        
+        return NextResponse.json(
+          { 
+            success: false, 
+            message: isClientError 
+              ? 'Invalid input data' 
+              : 'An unexpected error occurred',
+            errors: isClientError ? formatZodErrors(error) : undefined
+          },
+          { status: isClientError ? 400 : 500 }
+        );
+      }
+      ```
+      
+      ### Security Considerations
+      
+      1. **Rate Limiting**
+      
+      ```typescript
+      import { rateLimit } from '@/lib/rate-limit';
+
+      const limiter = rateLimit({
+        interval: 60 * 1000, // 1 minute
+        uniqueTokenPerInterval: 500,
+        max: 5, // 5 requests per minute
+      });
+      
+      export async function POST(req: NextRequest) {
+        const clientIp = req.headers.get('x-forwarded-for') || 'unknown';
+        
+        try {
+          await limiter.check(clientIp);
+          // Continue with normal request processing
+        } catch {
+          return NextResponse.json(
+            { success: false, message: 'Rate limit exceeded' },
+            { status: 429 }
+          );
+        }
+      }
+      ```
+      
+      2. **CORS Configuration**
+      
+      ```typescript
+      // middleware.ts
+      import { NextResponse } from 'next/server';
+      import type { NextRequest } from 'next/server';
+      
+      export function middleware(req: NextRequest) {
+        const res = NextResponse.next();
+        
+        // Set CORS headers for API routes
+        if (req.nextUrl.pathname.startsWith('/api/')) {
+          res.headers.set('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || '*');
+          res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+          res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        }
+        
+        return res;
+      }
+      ```
+      
+      ### Testing Considerations
+      
+      Create unit tests for API endpoints using Jest and Supertest:
+      
+      ```typescript
+      // __tests__/api/waitlist.test.ts
+      import { createMocks } from 'node-mocks-http';
+      import { POST } from '@/app/api/waitlist/route';
+      
+      jest.mock('@/lib/prisma', () => ({
+        prisma: {
+          subscriber: {
+            create: jest.fn(),
+            findUnique: jest.fn()
+          }
+        }
+      }));
+      
+      describe('POST /api/waitlist', () => {
+        it('should return 201 when valid email is provided', async () => {
+          const { req, res } = createMocks({
+            method: 'POST',
+            body: { email: 'test@example.com' }
+          });
+          
+          await POST(req, res);
+          
+          expect(res._getStatusCode()).toBe(201);
+          expect(JSON.parse(res._getData())).toEqual(
+            expect.objectContaining({
+              success: true
+            })
+          );
+        });
+      });
+      ```
+
+examples:
+  - input: |
+      // app/api/waitlist/route.ts
+      import { NextRequest, NextResponse } from 'next/server';
+      
+      export async function POST(req: NextRequest) {
+        const body = await req.json();
+        const { email } = body;
+        
+        // Save email to database
+        try {
+          // Save logic here
+          return NextResponse.json({ success: true });
+        } catch (error) {
+          return NextResponse.json({ success: false }, { status: 500 });
+        }
+      }
+    output: |
+      // app/api/waitlist/route.ts
+      import { NextRequest, NextResponse } from 'next/server';
+      import { z } from 'zod';
+      import { prisma } from '@/lib/prisma';
+      import { rateLimit } from '@/lib/rate-limit';
+      
+      // Email validation schema
+      const waitlistSchema = z.object({
+        email: z.string().email('Please enter a valid email')
+      });
+      
+      // Rate limiter for this endpoint
+      const limiter = rateLimit({
+        interval: 60 * 1000,
+        uniqueTokenPerInterval: 500,
+        max: 5,
+      });
+      
+      export async function POST(req: NextRequest) {
+        const clientIp = req.headers.get('x-forwarded-for') || 'unknown';
+        
+        try {
+          // Check rate limit
+          await limiter.check(clientIp);
+          
+          // Parse and validate request
+          const body = await req.json();
+          const result = waitlistSchema.safeParse(body);
+          
+          if (!result.success) {
+            return NextResponse.json({
+              success: false,
+              message: 'Invalid email address',
+              errors: result.error.format()
+            }, { status: 400 });
+          }
+          
+          const { email } = result.data;
+          
+          // Check if email already exists
+          const existing = await prisma.subscriber.findUnique({
+            where: { email }
+          });
+          
+          if (existing) {
+            return NextResponse.json({
+              success: false,
+              message: 'Email is already on the waitlist'
+            }, { status: 409 });
+          }
+          
+          // Save to database
+          await prisma.subscriber.create({
+            data: {
+              email,
+              referralCode: generateUniqueCode()
+            }
+          });
+          
+          return NextResponse.json({
+            success: true,
+            message: 'Successfully joined the waitlist'
+          }, { status: 201 });
+        } catch (error) {
+          console.error('Waitlist submission error:', error);
+          return NextResponse.json({
+            success: false,
+            message: 'Failed to join waitlist'
+          }, { status: 500 });
+        }
+      }
+
+metadata:
+  priority: high
+  version: 1.0
+</rule> 

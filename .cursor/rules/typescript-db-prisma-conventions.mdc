@@ -1,0 +1,424 @@
+---
+description: Prisma ORM Best Practices with PostgreSQL
+globs: *.ts,*.tsx,*/prisma/**/*
+alwaysApply: false
+---
+# Prisma ORM Database Conventions
+
+<rule>
+name: prisma_database_conventions
+description: Best practices for working with Prisma ORM and PostgreSQL
+
+filters:
+  - type: file_extension
+    pattern: "\\.(ts|tsx)$"
+  - type: content
+    pattern: "prisma|PrismaClient|\\$transaction|findUnique|findMany|create|update|delete|connect|from @prisma/client"
+
+actions:
+  - type: suggest
+    message: |
+      ## Prisma ORM Best Practices
+      
+      Follow these conventions when working with Prisma ORM and PostgreSQL to ensure data integrity, performance, and maintainability.
+      
+      ### Database Client Setup
+      
+      Create a singleton instance of PrismaClient to avoid connection pool exhaustion:
+      
+      ```typescript
+      // lib/prisma.ts
+      import { PrismaClient } from '@prisma/client';
+      
+      const globalForPrisma = global as unknown as { prisma: PrismaClient };
+      
+      export const prisma = globalForPrisma.prisma || new PrismaClient({
+        log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+      });
+      
+      if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+      ```
+      
+      ### Schema Design Best Practices
+      
+      #### Model Definitions
+      
+      ```prisma
+      // schema.prisma
+      model Subscriber {
+        id           String       @id @default(uuid())
+        email        String       @unique
+        createdAt    DateTime     @default(now())
+        updatedAt    DateTime     @updatedAt
+        referralCode String?      @unique
+        referredBy   String?
+        
+        // Relations
+        referrer     Subscriber?  @relation("ReferralRelation", fields: [referredBy], references: [id])
+        referrals    Subscriber[] @relation("ReferralRelation")
+        
+        // Indexes
+        @@index([email])
+        @@index([referralCode])
+      }
+      ```
+      
+      #### Field Naming Conventions
+      
+      - Use `camelCase` for field names
+      - Use `id` for primary keys
+      - Use `createdAt` and `updatedAt` timestamps for all models
+      - Use descriptive field names that indicate the data they contain
+      - Add reference fields with the related model name + 'Id' (e.g., `userId`)
+      
+      #### Appropriate Data Types
+      
+      - Use `String` with `@id @default(uuid())` for IDs
+      - Use `String` for email addresses, names, etc.
+      - Use `DateTime` for timestamps
+      - Use `Boolean` for flags
+      - Use `Int` for counts, ages, etc.
+      - Use `Decimal` for currency values
+      - Use `Json` for unstructured data
+      
+      #### Index Optimization
+      
+      Add indexes for fields frequently used in filters, ordering, or joins:
+      
+      ```prisma
+      model Subscriber {
+        // Fields...
+        
+        @@index([email])
+        @@index([referredBy])
+        @@index([createdAt])
+      }
+      ```
+      
+      ### Query Patterns
+      
+      #### Data Retrieval
+      
+      Use appropriate finder methods:
+      
+      ```typescript
+      // Find single record by unique identifier
+      const subscriber = await prisma.subscriber.findUnique({
+        where: { email: 'user@example.com' }
+      });
+      
+      // Find single record with non-unique filter
+      const subscriber = await prisma.subscriber.findFirst({
+        where: { 
+          createdAt: { gte: oneWeekAgo } 
+        }
+      });
+      
+      // Find multiple records with pagination
+      const subscribers = await prisma.subscriber.findMany({
+        where: { referredBy: null },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+        skip: (page - 1) * 10
+      });
+      ```
+      
+      #### Include Related Data
+      
+      Use the `include` option to fetch related data:
+      
+      ```typescript
+      const subscriberWithReferrals = await prisma.subscriber.findUnique({
+        where: { id: subscriberId },
+        include: {
+          referrals: {
+            select: {
+              id: true,
+              email: true,
+              createdAt: true
+            }
+          }
+        }
+      });
+      ```
+      
+      #### Select Specific Fields
+      
+      Use the `select` option to fetch only needed fields:
+      
+      ```typescript
+      const subscriberEmails = await prisma.subscriber.findMany({
+        select: {
+          email: true
+        }
+      });
+      ```
+      
+      ### Data Mutations
+      
+      #### Creating Records
+      
+      ```typescript
+      const newSubscriber = await prisma.subscriber.create({
+        data: {
+          email: 'user@example.com',
+          referralCode: generateUniqueCode()
+        }
+      });
+      ```
+      
+      #### Updating Records
+      
+      ```typescript
+      const updatedSubscriber = await prisma.subscriber.update({
+        where: { id: subscriberId },
+        data: {
+          verified: true
+        }
+      });
+      ```
+      
+      #### Upsert Operations
+      
+      ```typescript
+      const subscriberUpsert = await prisma.subscriber.upsert({
+        where: { email: 'user@example.com' },
+        update: { 
+          referralCode: generateUniqueCode() 
+        },
+        create: {
+          email: 'user@example.com',
+          referralCode: generateUniqueCode()
+        }
+      });
+      ```
+      
+      #### Delete Operations
+      
+      ```typescript
+      const deleteResult = await prisma.subscriber.delete({
+        where: { id: subscriberId }
+      });
+      ```
+      
+      ### Transactions
+      
+      Use transactions for operations that should succeed or fail together:
+      
+      ```typescript
+      const [subscriber, referralUpdate] = await prisma.$transaction([
+        prisma.subscriber.create({
+          data: {
+            email: 'user@example.com',
+            referralCode: generateUniqueCode(),
+            referredBy: referrerId
+          }
+        }),
+        // Update referrer's stats or other related data
+        prisma.referralStats.update({
+          where: { subscriberId: referrerId },
+          data: { count: { increment: 1 } }
+        })
+      ]);
+      ```
+      
+      For complex transactions, use the interactive transaction API:
+      
+      ```typescript
+      const result = await prisma.$transaction(async (tx) => {
+        // Get current count
+        const stats = await tx.referralStats.findUnique({
+          where: { subscriberId: referrerId }
+        });
+        
+        // Check if limit reached
+        if (stats?.count >= MAX_REFERRALS) {
+          throw new Error('Referral limit reached');
+        }
+        
+        // Create new subscriber
+        const newSubscriber = await tx.subscriber.create({
+          data: {
+            email: 'user@example.com',
+            referredBy: referrerId
+          }
+        });
+        
+        // Update stats
+        const updatedStats = await tx.referralStats.update({
+          where: { subscriberId: referrerId },
+          data: { count: { increment: 1 } }
+        });
+        
+        return { newSubscriber, updatedStats };
+      });
+      ```
+      
+      ### Error Handling
+      
+      Handle Prisma errors appropriately:
+      
+      ```typescript
+      try {
+        await prisma.subscriber.create({
+          data: { email: 'user@example.com' }
+        });
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          // Handle known Prisma errors
+          if (error.code === 'P2002') {
+            // Unique constraint violation
+            throw new Error('A subscriber with this email already exists');
+          }
+          if (error.code === 'P2003') {
+            // Foreign key constraint violation
+            throw new Error('Referenced record does not exist');
+          }
+        }
+        // Re-throw unknown errors
+        throw error;
+      }
+      ```
+      
+      ### Performance Considerations
+      
+      1. **Batch Operations**
+      
+      Use `createMany` for inserting multiple records:
+      
+      ```typescript
+      const createdSubscribers = await prisma.subscriber.createMany({
+        data: [
+          { email: 'user1@example.com' },
+          { email: 'user2@example.com' },
+          { email: 'user3@example.com' }
+        ],
+        skipDuplicates: true // Skip records that violate unique constraints
+      });
+      ```
+      
+      2. **Pagination**
+      
+      Always paginate large result sets:
+      
+      ```typescript
+      const PAGE_SIZE = 20;
+      
+      const subscribers = await prisma.subscriber.findMany({
+        take: PAGE_SIZE,
+        skip: (page - 1) * PAGE_SIZE,
+        orderBy: { createdAt: 'desc' }
+      });
+      ```
+      
+      3. **Cursor-based Pagination**
+      
+      For high-performance pagination:
+      
+      ```typescript
+      const subscribers = await prisma.subscriber.findMany({
+        take: 20,
+        cursor: cursor ? { id: cursor } : undefined,
+        orderBy: { id: 'asc' }
+      });
+      
+      const nextCursor = subscribers.length === 20 ? subscribers[19].id : null;
+      ```
+      
+      ### Migration Practices
+      
+      1. **Development Workflow**
+      
+      ```bash
+      # Create migration after schema changes
+      npx prisma migrate dev --name added_verification_field
+      
+      # Apply migrations to production
+      npx prisma migrate deploy
+      ```
+      
+      2. **Schema Validation**
+      
+      ```bash
+      # Validate schema without applying changes
+      npx prisma validate
+      ```
+      
+      3. **Database Seeding**
+      
+      ```typescript
+      // prisma/seed.ts
+      import { PrismaClient } from '@prisma/client';
+      
+      const prisma = new PrismaClient();
+      
+      async function main() {
+        // Seed data
+        await prisma.subscriber.create({
+          data: {
+            email: 'admin@example.com',
+            verified: true
+          }
+        });
+      }
+      
+      main()
+        .catch(e => {
+          console.error(e);
+          process.exit(1);
+        })
+        .finally(async () => {
+          await prisma.$disconnect();
+        });
+      ```
+
+examples:
+  - input: |
+      // Create a new subscriber
+      const newSubscriber = await prisma.subscriber.create({
+        data: {
+          email: email,
+        }
+      });
+      
+      // Get all subscribers
+      const allSubscribers = await prisma.subscriber.findMany();
+    output: |
+      // Create a new subscriber with error handling and validation
+      try {
+        const newSubscriber = await prisma.subscriber.create({
+          data: {
+            email: email,
+            createdAt: new Date(),
+            referralCode: generateUniqueCode()
+          }
+        });
+        return { success: true, subscriber: newSubscriber };
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+          return { success: false, message: 'Email already registered' };
+        }
+        throw error;
+      }
+      
+      // Get subscribers with pagination and sorting
+      const subscribersPerPage = 20;
+      const allSubscribers = await prisma.subscriber.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: subscribersPerPage,
+        skip: (page - 1) * subscribersPerPage,
+        select: {
+          id: true,
+          email: true,
+          createdAt: true,
+          referralCode: true,
+          _count: {
+            select: { referrals: true }
+          }
+        }
+      });
+
+metadata:
+  priority: high
+  version: 1.0
+</rule> 
